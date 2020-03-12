@@ -1,25 +1,22 @@
 const express = require("express");
-const fetch = require("node-fetch");
 const app = express();
 const session = require("express-session");
 const http = require("http").Server(app);
 const io = require("socket.io")(http);
+const low = require('lowdb');
 
-const PRIMARY_URL_STOOQ = "https://stooq.com/q/l/?f=sd2t2ohlcv&h&e=json";
-
-const low = require('lowdb')
-const FileSync = require('lowdb/adapters/FileSync')
-
-const adapter = new FileSync('db.json')
-const db = low(adapter)
+const { getStockPrice } = require('./util/bot');
+const FileSync = require('lowdb/adapters/FileSync');
+const adapter = new FileSync('db.json');
+const db = low(adapter);
 
 db.defaults({ users: [] })
-  .write()
+  .write();
 
 // Add test users
 db.get('users')
   .push({ id: 1, email: 'user1', password: '12345'})
-  .write()
+  .write();
 
 app.get("/", (_, res) => {
   res.render("login.ejs");
@@ -96,14 +93,6 @@ io.sockets.on("connection", socket => {
   });
 });
 
-const server = http.listen(8080, () => {
+http.listen(8080, () => {
   console.log("Running on localhost:8080");
 });
-
-const getStockPrice = stockCode =>
-  new Promise((resolve, reject) => {
-    fetch(PRIMARY_URL_STOOQ + `&s=${stockCode}`)
-      .then(res => res.json())
-      .then(data => resolve(data.symbols[0].close))
-      .catch(err => reject(err));
-  });
