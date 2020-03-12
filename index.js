@@ -10,8 +10,14 @@ const FileSync = require('lowdb/adapters/FileSync');
 const adapter = new FileSync('db.json');
 const db = low(adapter);
 
-db.defaults({ users: [] })
-  .write();
+db.defaults({ users: [], messages: [] })
+.write();
+
+db.set('users', [])
+  .write()
+
+db.set('messages', [])
+  .write()
 
 // Add test users
 db.get('users')
@@ -65,26 +71,46 @@ app.get("/logout", (req, res) => {
 io.sockets.on("connection", socket => {
   socket.on("username", username => {
     socket.username = username;
-    io.emit("access_room_update", "🔵 <i>" + socket.username + " joined the chat..</i>");
+    io.emit(
+      "access_room_update",
+      "🔵 <i>" + socket.username + " joined the chat..</i>"
+    );
+
   });
 
   socket.on("disconnect", username => {
-    io.emit("access_room_update", "🔴 <i>" + socket.username + " left the chat..</i>");
+    io.emit(
+      "access_room_update",
+      "🔴 <i>" + socket.username + " left the chat..</i>"
+    );
   });
 
   socket.on("new_message", async message => {
     if (message.includes("/stock") && message.split(" ").length > 1) {
       const stockCode = message.split(" ")[1];
+      
       try {
         const price = await getStockPrice(stockCode);
         io.emit(
           "new_message",
-          "<strong>" + socket.username + "</strong>: " + `${stockCode.toUpperCase()} quote is $${price} per share`
+          "<strong>" +
+            socket.username +
+            "</strong>: " +
+            `${stockCode.toUpperCase()} quote is $${price} per share`
         );
       } catch (error) {
         console.log("Could not find stock price for this code!");
       }
     } else {
+      db.get("messages")
+        .push({ message, from: socket.username })
+        .write();
+
+      if(db.get("messages").value().length > 49) {
+        db.get("messages").shift().write()
+        io.emit("shift_messages");
+      }
+
       io.emit(
         "new_message",
         "<strong>" + socket.username + "</strong>: " + message

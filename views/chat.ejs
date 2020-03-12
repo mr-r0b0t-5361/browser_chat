@@ -34,6 +34,10 @@
         $('#messages').append($('<li>').html(msg));
       });
 
+      socket.on('shift_messages', () => {
+        $('#messages li').eq(0).remove();
+      });
+
       socket.on('access_room_update', username => {
         $('#messages').append($('<li>').html(username));
       });
