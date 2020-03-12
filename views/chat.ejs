@@ -23,6 +23,9 @@
     <script>
       const socket = io.connect('http://localhost:8080');
 
+      const username = prompt('What\'s your name?');
+      socket.emit('username', username);
+
       $('form').submit((e) => {
         e.preventDefault();
         socket.emit('new_message', $('#txt').val());
@@ -41,9 +44,6 @@
       socket.on('access_room_update', username => {
         $('#messages').append($('<li>').html(username));
       });
-
-      const username = prompt('What\'s your name?');
-      socket.emit('username', username);
 
     </script>
   </body>

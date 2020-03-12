@@ -4,57 +4,49 @@ const session = require("express-session");
 const http = require("http").Server(app);
 const io = require("socket.io")(http);
 const low = require('lowdb');
-
-const { getStockPrice } = require('./util/bot');
 const FileSync = require('lowdb/adapters/FileSync');
 const adapter = new FileSync('db.json');
 const db = low(adapter);
 
-db.defaults({ users: [], messages: [] })
-.write();
+const { resetDatabase } = require('./database/reset');
+const { getStockPrice } = require('./util/bot');
+const { MESSAGE_LIMIT } = require("./constants/chat");
+const { SESSION_SECRET } = require("./constants/secrets");
+const { getUser } = require("./util/chat");
 
-db.set('users', [])
-  .write()
-
-db.set('messages', [])
-  .write()
-
-// Add test users
-db.get('users')
-  .push({ id: 1, email: 'user1', password: '12345'})
-  .write();
-
-app.get("/", (_, res) => {
-  res.render("login.ejs");
-});
+resetDatabase();
 
 app.use(
   session({
-    secret: "2C44-4D44-WppQ38S",
+    secret: SESSION_SECRET,
     resave: true,
     saveUninitialized: true
   })
 );
 
-var auth = (req, res, next) => {
-  if (req.session && req.session.admin)
+const auth = (req, res, next) => {
+  if (req.session && req.session.admin) {
     return next();
-  else return res.sendStatus(401);
+  }
+  res.sendStatus(401);
 };
+
+app.get("/", (_, res) => {
+  res.render("login.ejs");
+});
 
 app.get("/chat", auth, (_, res) => {
   res.render("chat.ejs");
 });
 
 app.get("/login", (req, res) => {
-    const result = db.get('users')
-    .find({ email: req.query.username, password: req.query.password})
-    .value();
+  const { username, password } = req.query;
+  const result = db.get("users").find({ email: username, password: password }).value();
 
-  if (!req.query.username || !req.query.password) {
+  if (!username || !password) {
     res.send("login failed");
-  } else if (result && req.query.username === result.email && req.query.password === result.password) {
-    req.session.user = req.query.username;
+  } else if (result && username === result.email && password === result.password) {
+    req.session.user = username;
     req.session.admin = true;
 
     res.redirect("/chat");
@@ -75,7 +67,6 @@ io.sockets.on("connection", socket => {
       "access_room_update",
       "🔵 <i>" + socket.username + " joined the chat..</i>"
     );
-
   });
 
   socket.on("disconnect", username => {
@@ -91,13 +82,7 @@ io.sockets.on("connection", socket => {
       
       try {
         const price = await getStockPrice(stockCode);
-        io.emit(
-          "new_message",
-          "<strong>" +
-            socket.username +
-            "</strong>: " +
-            `${stockCode.toUpperCase()} quote is $${price} per share`
-        );
+        io.emit("new_message", getUser(socket.username) + getStockMsg(stockCode, price));
       } catch (error) {
         console.log("Could not find stock price for this code!");
       }
@@ -106,15 +91,12 @@ io.sockets.on("connection", socket => {
         .push({ message, from: socket.username })
         .write();
 
-      if(db.get("messages").value().length > 49) {
+      if(db.get("messages").value().length >= MESSAGE_LIMIT) {
         db.get("messages").shift().write()
         io.emit("shift_messages");
       }
 
-      io.emit(
-        "new_message",
-        "<strong>" + socket.username + "</strong>: " + message
-      );
+      io.emit("new_message", getUser(socket.username) + message);
     }
   });
 });
