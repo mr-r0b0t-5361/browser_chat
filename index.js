@@ -5,6 +5,7 @@ const http = require("http").Server(app);
 
 const { loginHandler } = require('./handlers/login');
 const { logoutHandler } = require('./handlers/logout');
+const { auth } = require('./handlers/auth');
 const { setSocketEvents } = require('./sockets/events');
 const { resetDatabase } = require('./database/reset');
 const { SESSION_SECRET } = require("./constants/secrets");
@@ -18,13 +19,6 @@ app.use(
     saveUninitialized: true
   })
 );
-
-const auth = (req, res, next) => {
-  if (req.session && req.session.admin) {
-    return next();
-  }
-  res.sendStatus(401);
-};
 
 app.get("/", (_, res) => res.render("login.ejs"));
 app.get("/chat", auth, (_, res) => res.render("chat.ejs"));
