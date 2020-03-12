@@ -6,9 +6,6 @@ const http = require("http").Server(app);
 const io = require("socket.io")(http);
 
 const PRIMARY_URL_STOOQ = "https://stooq.com/q/l/?f=sd2t2ohlcv&h&e=json";
-const { PASSWORD_SECRET } = require('./constants/crypt');
-const { encrypt } = require('./util/crypt');
-
 
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
