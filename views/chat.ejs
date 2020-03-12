@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Simple Group Chat on Node.js</title>
+    <title>Browser Chat</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font: 13px Helvetica, Arial; }
@@ -23,23 +23,22 @@
     <script>
       const socket = io.connect('http://localhost:8080');
 
-      $('form').submit(function (e) {
+      $('form').submit((e) => {
         e.preventDefault();
-        socket.emit('chat_message', $('#txt').val());
+        socket.emit('new_message', $('#txt').val());
         $('#txt').val('');
         return false;
       });
 
-      socket.on('chat_message', function (msg) {
+      socket.on('new_message', msg => {
         $('#messages').append($('<li>').html(msg));
       });
 
-      socket.on('is_online', function (username) {
+      socket.on('access_room_update', username => {
         $('#messages').append($('<li>').html(username));
       });
 
-      // ask username
-      var username = prompt('Please tell me your name');
+      const username = prompt('What\'s your name?');
       socket.emit('username', username);
 
     </script>
