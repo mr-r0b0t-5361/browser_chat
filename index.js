@@ -57,7 +57,7 @@ app.get("/login", (req, res) => {
 
 app.get("/logout", (req, res) => {
   req.session.destroy();
-  res.send("logout success!");
+  res.send("logout successfully!");
 });
 
 io.sockets.on("connection", socket => {
