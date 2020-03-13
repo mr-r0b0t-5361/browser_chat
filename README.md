@@ -1,9 +1,25 @@
 # Browser Chat Demo
 
-## Running the program
+## Requirements
 
-Run the program by using
+- node 8.0 or higher
 
-```shell
-$ node index.js
+## Installation
+
+```bash
+npm install
+```
+or
+```bash
+yarn
+```
+
+## Running
+
+```bash
+npm run start
+```
+or
+```bash
+yarn start
 ```
