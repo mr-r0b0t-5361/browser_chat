@@ -1,4 +1,4 @@
-const fetch = require("node-fetch");
+const fetch = require('node-fetch');
 
 const { PRIMARY_URL_STOOQ } = require('../constants/bot')
 

@@ -1,56 +1,56 @@
-const low = require("lowdb");
-const FileSync = require("lowdb/adapters/FileSync");
-const adapter = new FileSync("db.json");
+const low = require('lowdb');
+const FileSync = require('lowdb/adapters/FileSync');
+const adapter = new FileSync('db.json');
 const db = low(adapter);
-const { MESSAGE_LIMIT } = require("../constants/chat");
-const { getUser, getStockMsg } = require("../util/chat");
+const { MESSAGE_LIMIT } = require('../constants/chat');
+const { getUser, getStockMsg } = require('../util/chat');
 const { getStockPrice } = require('../util/bot');
 
 const setSocketEvents = http => {
-  const io = require("socket.io")(http);
+  const io = require('socket.io')(http);
 
-  io.sockets.on("connection", socket => {
-    socket.on("username", username => {
+  io.sockets.on('connection', socket => {
+    socket.on('username', username => {
       socket.username = username;
       io.emit(
-        "access_room_update",
-        "🔵 <i>" + socket.username + " joined the chat..</i>"
+        'access_room_update',
+        '🔵 <i>' + socket.username + ' joined the chat..</i>'
       );
     });
 
-    socket.on("disconnect", () => {
+    socket.on('disconnect', () => {
       io.emit(
-        "access_room_update",
-        "🔴 <i>" + socket.username + " left the chat..</i>"
+        'access_room_update',
+        '🔴 <i>' + socket.username + ' left the chat..</i>'
       );
     });
 
-    socket.on("new_message", async message => {
-      if (message.includes("/stock") && message.split(" ").length > 1) {
-        const stockCode = message.split(" ")[1];
+    socket.on('new_message', async message => {
+      if (message.includes('/stock') && message.split(' ').length > 1) {
+        const stockCode = message.split(' ')[1];
 
         try {
           const price = await getStockPrice(stockCode);
           io.emit(
-            "new_message",
+            'new_message',
             getUser(socket.username) + getStockMsg(stockCode, price)
           );
         } catch (error) {
-          console.log("Could not find stock price for this code!");
+          console.log('Could not find stock price for this code!');
         }
       } else {
-        db.get("messages")
+        db.get('messages')
           .push({ message, from: socket.username })
           .write();
 
-        if (db.get("messages").value().length >= MESSAGE_LIMIT) {
-          db.get("messages")
+        if (db.get('messages').value().length >= MESSAGE_LIMIT) {
+          db.get('messages')
             .shift()
             .write();
-          io.emit("shift_messages");
+          io.emit('shift_messages');
         }
 
-        io.emit("new_message", getUser(socket.username) + message);
+        io.emit('new_message', getUser(socket.username) + message);
       }
     });
   });
