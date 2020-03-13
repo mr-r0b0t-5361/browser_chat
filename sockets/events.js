@@ -3,7 +3,7 @@ const FileSync = require("lowdb/adapters/FileSync");
 const adapter = new FileSync("db.json");
 const db = low(adapter);
 const { MESSAGE_LIMIT } = require("../constants/chat");
-const { getUser } = require("../util/chat");
+const { getUser, getStockMsg } = require("../util/chat");
 const { getStockPrice } = require('../util/bot');
 
 const setSocketEvents = http => {
